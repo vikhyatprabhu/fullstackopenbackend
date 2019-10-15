@@ -1,0 +1,27 @@
+{
+  "name": "fullstackopenbackend",
+  "version": "1.0.0",
+  "description": "Backend project for the full stack open course",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/vikhyatprabhu/fullstackopenbackend.git"
+  },
+  "author": "Vikhyat Prabhu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vikhyatprabhu/fullstackopenbackend/issues"
+  },
+  "homepage": "https://github.com/vikhyatprabhu/fullstackopenbackend#readme",
+  "devDependencies": {
+    "nodemon": "^1.19.3"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
