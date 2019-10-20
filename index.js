@@ -1,4 +1,6 @@
+require('dotenv').config()
 const express = require("express");
+const person=require('./models/person')
 const app = express();
 var morgan = require('morgan')
 const cors = require('cors')
@@ -30,36 +32,12 @@ app.use(bodyParser.json());
 
 
 
-let persons = [
-  {
-    "name": "Arto Hellas",
-    "number": "040-123456",
-    "id": 1
-  },
-  {
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523",
-    "id": 2
-  },
-  {
-    "name": "Dan Abramov",
-    "number": "12-43-234345",
-    "id": 3
-  },
-  {
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122",
-    "id": 4
-  },
-  {
-    "name": "Vikhyat",
-    "number": "123124",
-    "id": 5
-  }
-];
+
 
 app.get("/api/persons", (req, res) => {
-  res.json(persons);
+  person.find({}).then(
+    persons => res.json(persons.map(p=> p.toJSON()))
+  )
 });
 
 
@@ -89,18 +67,14 @@ app.post('/api/persons', (request, response) => {
       error: 'content missing' 
     })
   }
-  const person = {
+  const tempPerson =new person({
     name:body.name,
-    number:body.number,
-    id: generateId()
-  }
-  if(persons.map(p=>p.name).includes(body.name)){
-    return response.status(400).json({ 
-      error: 'name must be unique' 
-    })
-  }
-  persons = persons.concat(person);
-  response.json(person)
+    number:body.number
+  })
+
+  tempPerson.save().then(
+    newPerson=> response.json(newPerson.toJSON())
+  )
 })
 
 
