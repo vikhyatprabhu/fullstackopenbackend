@@ -1,30 +1,32 @@
-require('dotenv').config()
+require("dotenv").config();
 const express = require("express");
-const person=require('./models/person')
+const person = require("./models/person");
 const app = express();
-var morgan = require('morgan')
-const cors = require('cors')
+var morgan = require("morgan");
+const cors = require("cors");
 
-app.use(cors())
-app.use(express.static('build'))
-morgan.token('content', function (req, res) {  
-  
-  if (req.method=="POST") 
-     return JSON.stringify(req.body)
-  else 
-    return ""
+app.use(cors());
+app.use(express.static("build"));
 
-})
-app.use(morgan(function (tokens, req, res) {
-  return [
-    tokens.method(req, res),
-    tokens.url(req, res),
-    tokens.status(req, res),
-    tokens.res(req, res, 'content-length'), '-',
-    tokens['response-time'](req, res), 'ms',
-    tokens.content(req,res)
-  ].join(' ')
-}))
+
+morgan.token("content", function(req, res) {
+  if (req.method == "POST") return JSON.stringify(req.body);
+  else return "";
+});
+app.use(
+  morgan(function(tokens, req, res) {
+    return [
+      tokens.method(req, res),
+      tokens.url(req, res),
+      tokens.status(req, res),
+      tokens.res(req, res, "content-length"),
+      "-",
+      tokens["response-time"](req, res),
+      "ms",
+      tokens.content(req, res)
+    ].join(" ");
+  })
+);
 
 const bodyParser = require("body-parser");
 
@@ -32,51 +34,84 @@ app.use(bodyParser.json());
 
 
 
-
-
 app.get("/api/persons", (req, res) => {
-  person.find({}).then(
-    persons => res.json(persons.map(p=> p.toJSON()))
-  )
+  person.find({}).then(persons => res.json(persons.map(p => p.toJSON())))
+  .catch(error => next(error));
+  ;
 });
 
-
-app.get("/info",(req,res)=>{
-  let output="Phonebook has "+persons.length+" entries ";
-   output=output.concat("\n\n"+new Date().toUTCString());
-   res.write(output);
-   res.end();
-})
-
-app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
-  persons = persons.filter(person => person.id !== id);
-
-  response.status(204).end();
+app.get("/info", (req, res) => {
+  person.find({}).then(persons => {
+    let output = "Phonebook has " + persons.length + " entries ";
+    output = output.concat("\n\n" + new Date().toUTCString());
+    res.write(output);
+    res.end();
+  });
 });
 
-
-const generateId = () => {
-  return Math.floor(Math.random()*Math.floor(100000))
-}
-
-app.post('/api/persons', (request, response) => {
-  const body = request.body
-  if (!body.name || !body.number) {
-    return response.status(400).json({ 
-      error: 'content missing' 
+app.delete("/api/persons/:id", (request, response, next) => {
+  person
+    .findByIdAndRemove(request.params.id)
+    .then(result => {
+      response.status(204).end();
     })
+    .catch(error => next(error));
+});
+
+app.put("/api/persons/:id", (request, response, next) => {
+  const body = request.body;
+  const updatedPerson = {
+    name: body.name,
+    number: body.number
+  };
+
+  person
+    .findByIdAndUpdate(request.params.id, updatedPerson, { new: true })
+    .then(updatedNote => {
+      response.json(updatedNote.toJSON());
+    })
+    .catch(error => next(error));
+});
+
+app.get("/api/persons/:id", (request, response, next) => {
+  person
+    .findById(request.params.id)
+    .then(responsePerson => {
+      if (responsePerson) {
+        response.json(responsePerson.toJSON());
+      } else {
+        response.status(404).end();
+      }
+    })
+    .catch(error => next(error));
+});
+
+app.post("/api/persons", (request, response,next) => {
+  const body = request.body;
+  if (!body.name || !body.number) {
+    return response.status(400).json({
+      error: "name or number missing"
+    });
   }
-  const tempPerson =new person({
-    name:body.name,
-    number:body.number
-  })
+  const tempPerson = new person({
+    name: body.name,
+    number: body.number
+  });
+  console.log("POSTING")
+  tempPerson.save()
+  .then(newPerson => response.json(newPerson.toJSON()))
+  .catch(error=> next(error));
+});
 
-  tempPerson.save().then(
-    newPerson=> response.json(newPerson.toJSON())
-  )
-})
-
+const errorHandler = (error, request, response, next) => {
+  if (error.name === "CastError" && error.kind === "ObjectId") {
+    return response.status(400).send({ error: "malformatted id" });
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  }
+  next(error);
+};
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT);
