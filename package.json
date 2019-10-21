@@ -12,7 +12,6 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch": "nodemon index.js",
     "lint": "eslint ."
-
   },
   "proxy": "http://localhost:3001",
   "repository": {
